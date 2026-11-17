@@ -22,7 +22,18 @@
     details summary { cursor: pointer; margin: 0.5rem 0; }
     a.button { display: inline-block; text-decoration: none; padding: 0.5rem 1rem; border: 1px solid #888; border-radius: 8px; }
     #status { margin-top: 1rem; color: #666; }
-    @media (prefers-color-scheme: dark) { .card { border-color: #444; } th, td { border-color: #333; } p.lead, .stats div span, #status { color: #aaa; } }
+    fieldset { border: 1px solid #ccc; border-radius: 8px; margin: 0 0 1rem; padding: 0.75rem 1rem; }
+    legend { font-weight: 600; padding: 0 0.3rem; }
+    fieldset label { font-weight: normal; }
+    fieldset small { color: #666; }
+    input[type=range] { width: 100%; margin: 0.2rem 0 0.8rem; }
+    label.check { display: flex; gap: 0.5rem; align-items: center; }
+    .score { font-size: 3rem; font-weight: 700; line-height: 1; }
+    .counts span { display: inline-block; margin: 0.4rem 1rem 0 0; }
+    .ok { color: #1a7f37; } .octave { color: #0969da; } .wrong { color: #cf222e; font-weight: 600; }
+    .missed { color: #888; text-decoration: line-through; } .extra { color: #bc4c00; }
+    .warn { background: #fff3cd; color: #664d03; border-radius: 8px; padding: 0.6rem 0.9rem; margin: 0.8rem 0; }
+    @media (prefers-color-scheme: dark) { .card, fieldset { border-color: #444; } th, td { border-color: #333; } p.lead, .stats div span, #status, fieldset small { color: #aaa; } .ok { color: #3fb950; } .octave { color: #58a6ff; } .wrong { color: #ff7b72; } .warn { background: #3a2f00; color: #ffd866; } }
   </style>
 </head>
 <body>

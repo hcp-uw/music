@@ -60,3 +60,4 @@ The seams between features are data formats. Agree on these first so every part 
 - The target time for transcription. The plan says under 10 seconds, with a question mark.
 - How the subscores combine into the overall score, and what "changes at a reasonable rate" means in numbers.
 - The order of the post-MVP features.
+- Whole-take transposition. A phone recording of a MIDI file played back came out one semitone higher than the file (and about 9% faster). We need to find out why that happens, and decide how a take that is entirely in a different key should affect the score. Today the comparison detects the shift, lines the notes up after shifting, and scores as if the key were right; the page does not mention it.

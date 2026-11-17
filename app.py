@@ -11,6 +11,7 @@ from pathlib import Path
 from flask import Flask, abort, render_template, request, send_from_directory
 from werkzeug.utils import secure_filename
 
+from comparison import compare
 from transcription import get_model, transcribe
 
 ROOT = Path(__file__).resolve().parent
@@ -38,6 +39,12 @@ def do_transcribe():
     folder = UPLOADS / job
     folder.mkdir()
 
+    try:
+        min_loudness = min(1.0, max(0.0, float(request.form.get("min_loudness", 0.3))))
+    except ValueError:
+        min_loudness = 0.3
+    octave_ok = request.form.get("octave_ok") == "on"
+
     results = []
     for field, label in RECORDINGS:
         upload = request.files.get(field)
@@ -61,7 +68,9 @@ def do_transcribe():
             }
         )
 
-    return render_template("result.html", job=job, results=results)
+    by_field = {field: r["result"] for field, r in zip((f for f, _ in RECORDINGS), results)}
+    comparison = compare(by_field["reference"].notes, by_field["student"].notes, min_loudness, octave_ok)
+    return render_template("result.html", job=job, results=results, comparison=comparison)
 
 
 @app.get("/uploads/<job>/<name>")
