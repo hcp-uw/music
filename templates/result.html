@@ -2,11 +2,24 @@
 {% block title %}Results · Music practice tool{% endblock %}
 {% block body %}
 <h1>Results</h1>
-<p class="lead">Job {{ job }}. <a href="/">Compare another pair</a></p>
+<p class="lead">Job {{ job }}. <a href="/">Compare another pair</a> · <a href="/settings">Advanced settings</a></p>
 
 {% set c = comparison %}
 <div class="card">
-  <h2>Note score</h2>
+  <h2>Final score</h2>
+  <div class="score">{{ "%.0f" | format(100 * score) }}%</div>
+  <p class="lead">
+    {% if fell_back %}No metric was selected, so this is the note score.{% else %}
+    Average of {% for p in parts if p.counted %}{{ p.label | lower }} {{ "%.0f" | format(100 * p.score) }}%{% if not loop.last %}, {% endif %}{% endfor %}.{% endif %}
+    {% for p in parts if p.included and not p.counted and not fell_back %} {{ p.label }} could not be measured and was left out.{% endfor %}
+    {% set skipped = parts | rejectattr("included") | map(attribute="label") | map("lower") | list %}
+    {% if skipped %}Not counted: {{ skipped | join(", ") }}.{% endif %}
+    <a href="/settings">Change</a>
+  </p>
+</div>
+
+<div class="card">
+  <h2>Notes <small class="tag">{{ "counts toward final score" if parts[0].counted else "not counted" }}</small></h2>
   <div class="score">{{ "%.0f" | format(100 * c.score) }}%</div>
   <p class="lead">{{ c.counts.correct + (c.counts.octave if c.octave_counts_as_correct else 0) }} of {{ c.reference_notes }} reference notes played correctly.
     You reached note {{ c.reached_note }} of {{ c.reference_notes }}.</p>
@@ -17,11 +30,27 @@
     <span class="missed">missed {{ c.counts.missed }}</span>
     <span class="extra">extra {{ c.counts.extra }}</span>
   </div>
-  <p class="lead">Settings: notes quieter than {{ "%.2f" | format(c.min_loudness) }} ignored. Extra notes do not lower the score.</p>
+  <p class="lead">Notes quieter than {{ "%.2f" | format(c.min_loudness) }} ignored. Extra notes do not lower the score.</p>
+</div>
+
+{% set t = timing %}
+<div class="card">
+  <h2>Timing <small class="tag">tempo {{ "counts" if parts[2].counted else "not counted" }} · rhythm {{ "counts" if parts[1].counted else "not counted" }}</small></h2>
+  {% if t.rhythm_score is none %}
+  <p class="lead">Not enough matched notes to measure timing (need {{ 4 }}, had {{ t.matched }}).</p>
+  {% else %}
+  <div class="stats">
+    <div><span>tempo</span><b>{{ tempo_text }}</b></div>
+    {% if parts[2].score is not none %}<div><span>tempo score</span><b>{{ "%.0f" | format(100 * parts[2].score) }}%</b></div>{% endif %}
+    <div><span>rhythm</span><b>{{ "%.0f" | format(100 * t.rhythm_score) }}%</b></div>
+  </div>
+  <p class="lead">{{ t.within_tolerance }} of {{ t.matched }} matched notes were within {{ (1000 * t.tolerance) | int }} ms of where they should be.
+    Typical error {{ "%.0f" | format(t.typical_error_ms) }} ms. Playing slower or faster overall does not lower the rhythm score.</p>
+  {% endif %}
   <details>
     <summary>Show note by note ({{ c.rows | length }} lines)</summary>
     <table>
-      <thead><tr><th>reference (s)</th><th>you (s)</th><th>result</th></tr></thead>
+      <thead><tr><th>reference (s)</th><th>you (s)</th><th>result</th><th>timing</th></tr></thead>
       <tbody>
       {% for r in c.rows %}
         <tr>
@@ -37,6 +66,10 @@
             {% endfor %}
             {% for x in r.extras %}{% if r.notes or not loop.first %} · {% endif %}<span class="extra">+{{ x }} extra</span>{% endfor %}
           </td>
+          <td>{% if r.offset_ms is not none %}
+            {% set late = r.offset_ms > 0 %}{% set off = r.offset_ms | abs %}
+            <span class="{{ 'wrong' if off > 1000 * t.tolerance else 'ok' }}">{{ "%.0f" | format(off) }} ms {{ "late" if late else "early" }}</span>
+          {% endif %}</td>
         </tr>
       {% endfor %}
       </tbody>

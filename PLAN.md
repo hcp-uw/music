@@ -54,6 +54,11 @@ The seams between features are data formats. Agree on these first so every part 
 - The user controls the error thresholds and the weight of each metric in the overall score.
 - Website first. An iOS app is post-MVP.
 
+## Known limitations to come back to
+
+- **Timing assumes one steady tempo.** Tempo and rhythm come from one straight line through the whole take (reference time against student time). A student who slows down for a hard passage and recovers will see the notes in that passage marked late or early even if the rhythm inside it was fine, and a single hesitation shifts every note after it. Likely fix: fit the line over a sliding window of notes, or score the gaps between consecutive notes instead of absolute positions. The "late, late, late, then early" pattern is also the signal for the later "you slowed down in bars 9 to 12" feature. Seen on the first real student-versus-reference pair (17 Nov 2026): the student drifted from 7% to 13% faster than the reference; the single line gave a rhythm score of 11% (typical error 375 ms), while a 12-note sliding window gave 89% (typical error 32 ms). Keep as is for now; tune later.
+- **Timing tolerance is fixed at 150 ms.** The user will be able to adjust it later. It should not go below about 100 ms, which is the transcriber's own timing jitter.
+
 ## Open questions
 
 - Browser only, or a server for Basic Pitch and the comparison.

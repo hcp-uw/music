@@ -12,7 +12,10 @@
     .card { border: 1px solid #ccc; border-radius: 10px; padding: 1.25rem; margin: 1.25rem 0; }
     label { display: block; font-weight: 600; margin-bottom: 0.35rem; }
     input[type=file] { margin-bottom: 1rem; }
-    button { font-size: 1rem; padding: 0.6rem 1.2rem; border-radius: 8px; border: 1px solid #888; cursor: pointer; }
+    button, a.button { font: inherit; font-size: 1rem; padding: 0.6rem 1.2rem; border-radius: 8px; border: 1px solid #888; cursor: pointer; background: transparent; color: inherit; text-decoration: none; display: inline-block; line-height: 1.2; }
+    button.primary { background: #1f6feb; color: #fff; border-color: #1f6feb; }
+    .actions { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-top: 0.5rem; }
+    p.small { font-size: 0.9rem; margin: 0.9rem 0 0; }
     button:disabled { opacity: 0.6; cursor: wait; }
     .stats { display: flex; gap: 1.5rem; flex-wrap: wrap; margin: 0.5rem 0 1rem; }
     .stats div span { display: block; font-size: 0.8rem; color: #666; }
@@ -20,7 +23,6 @@
     table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
     th, td { text-align: left; padding: 0.2rem 0.6rem; border-bottom: 1px solid #ddd; }
     details summary { cursor: pointer; margin: 0.5rem 0; }
-    a.button { display: inline-block; text-decoration: none; padding: 0.5rem 1rem; border: 1px solid #888; border-radius: 8px; }
     #status { margin-top: 1rem; color: #666; }
     fieldset { border: 1px solid #ccc; border-radius: 8px; margin: 0 0 1rem; padding: 0.75rem 1rem; }
     legend { font-weight: 600; padding: 0 0.3rem; }
@@ -29,11 +31,13 @@
     input[type=range] { width: 100%; margin: 0.2rem 0 0.8rem; }
     label.check { display: flex; gap: 0.5rem; align-items: center; }
     .score { font-size: 3rem; font-weight: 700; line-height: 1; }
+    .tag { font-size: 0.75rem; font-weight: normal; color: #666; border: 1px solid #ccc; border-radius: 999px; padding: 0.1rem 0.6rem; vertical-align: middle; margin-left: 0.4rem; }
+    label.check span small { display: block; color: #666; }
     .counts span { display: inline-block; margin: 0.4rem 1rem 0 0; }
     .ok { color: #1a7f37; } .octave { color: #0969da; } .wrong { color: #cf222e; font-weight: 600; }
     .missed { color: #888; text-decoration: line-through; } .extra { color: #bc4c00; }
     .warn { background: #fff3cd; color: #664d03; border-radius: 8px; padding: 0.6rem 0.9rem; margin: 0.8rem 0; }
-    @media (prefers-color-scheme: dark) { .card, fieldset { border-color: #444; } th, td { border-color: #333; } p.lead, .stats div span, #status, fieldset small { color: #aaa; } .ok { color: #3fb950; } .octave { color: #58a6ff; } .wrong { color: #ff7b72; } .warn { background: #3a2f00; color: #ffd866; } }
+    @media (prefers-color-scheme: dark) { .card, fieldset { border-color: #444; } th, td { border-color: #333; } p.lead, .stats div span, #status, fieldset small, .tag, label.check span small { color: #aaa; } .tag { border-color: #444; } .ok { color: #3fb950; } .octave { color: #58a6ff; } .wrong { color: #ff7b72; } .warn { background: #3a2f00; color: #ffd866; } }
   </style>
 </head>
 <body>

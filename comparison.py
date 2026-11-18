@@ -51,6 +51,7 @@ class Row:
     stu_time: float | None
     notes: list[RowNote]   # reference notes in this event with their labels
     extras: list[str]      # student notes in this event with no reference counterpart
+    offset_ms: float | None = None   # filled in by timing.py: positive = late, negative = early
 
 
 @dataclass
