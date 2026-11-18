@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Advanced settings · Piano practice check{% endblock %}
+{% block body %}
+<h1>Advanced settings</h1>
+<p class="lead">Saved in this browser. <a href="/">Back to compare</a></p>
+
+<form class="card" action="/settings" method="post">
+  <fieldset>
+    <legend>What counts toward the final score</legend>
+    <p class="lead">The final score is the average of the metrics ticked here. If none are ticked, the note score is shown.</p>
+    <label class="check"><input name="include_notes" type="checkbox" {% if s.include_notes %}checked{% endif %}>
+      <span><b>Notes</b> <small>share of the reference notes you played correctly</small></span></label>
+    <label class="check"><input name="include_rhythm" type="checkbox" {% if s.include_rhythm %}checked{% endif %}>
+      <span><b>Rhythm</b> <small>share of your notes that landed close to the line of best fit through your timing</small></span></label>
+    <label class="check"><input name="include_tempo" type="checkbox" {% if s.include_tempo %}checked{% endif %}>
+      <span><b>Tempo</b> <small>full marks within 5% of the reference speed, then 10 points off for every further 4.5%, reaching zero at 50% off. Untick this while learning the notes, when speed does not matter yet</small></span></label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Rhythm</legend>
+    <label for="rhythm_tolerance_ms">Tolerance: a note counts as on time if it is within this many milliseconds of the line of best fit</label>
+    <input id="rhythm_tolerance_ms" name="rhythm_tolerance_ms" type="number" min="50" max="2000" step="10" value="{{ s.rhythm_tolerance_ms }}">
+    <small>Default 150. Below about 100 you start measuring the transcriber's own jitter rather than the player.</small>
+  </fieldset>
+
+  <fieldset>
+    <legend>Notes</legend>
+    <label for="min_loudness">Ignore notes quieter than <span id="ml_value">{{ "%.2f" | format(s.min_loudness) }}</span> <small>(0 keeps every note, higher drops more quiet notes)</small></label>
+    <input id="min_loudness" name="min_loudness" type="range" min="0" max="1" step="0.05" value="{{ s.min_loudness }}"
+           oninput="document.getElementById('ml_value').textContent = Number(this.value).toFixed(2)">
+    <label class="check"><input name="octave_ok" type="checkbox" {% if s.octave_ok %}checked{% endif %}> Count a right note played in the wrong octave as correct</label>
+  </fieldset>
+
+  <button type="submit">Save</button>
+  <a class="button" href="/settings/reset" style="margin-left:0.6rem">Reset to defaults</a>
+</form>
+{% endblock %}
