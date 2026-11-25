@@ -50,6 +50,13 @@ class Settings:
     def rhythm_tolerance(self) -> float:
         return self.rhythm_tolerance_ms / 1000
 
+    def metrics_text(self) -> str:
+        """Plain words for the front page: which metrics make the score."""
+        on = [n for n, v in (("notes", self.include_notes), ("rhythm", self.include_rhythm), ("tempo", self.include_tempo)) if v]
+        if not on:
+            return "notes only (nothing is selected in settings)"
+        return on[0] if len(on) == 1 else ", ".join(on[:-1]) + " and " + on[-1]
+
     def summary(self) -> str:
         counted = [n for n, on in (("notes", self.include_notes), ("rhythm", self.include_rhythm), ("tempo", self.include_tempo)) if on]
         return (f"final score from {' + '.join(counted) if counted else 'notes (nothing selected)'} · "

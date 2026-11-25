@@ -42,6 +42,12 @@ class SettingsTest(unittest.TestCase):
         s = Settings.from_dict({"rhythm_tolerance_ms": "lots"})
         self.assertEqual(s.rhythm_tolerance_ms, 150)
 
+    def test_metrics_text(self):
+        self.assertEqual(Settings().metrics_text(), "notes, rhythm and tempo")
+        self.assertEqual(Settings(include_tempo=False).metrics_text(), "notes and rhythm")
+        self.assertEqual(Settings(include_rhythm=False, include_tempo=False).metrics_text(), "notes")
+        self.assertIn("nothing", Settings(include_notes=False, include_rhythm=False, include_tempo=False).metrics_text())
+
     def test_round_trip(self):
         s = Settings(include_tempo=True, rhythm_tolerance_ms=300)
         self.assertEqual(Settings.from_dict(s.to_dict()), s)

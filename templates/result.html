@@ -1,12 +1,18 @@
 {% extends "base.html" %}
-{% block title %}Results · Music practice tool{% endblock %}
+{% block title %}Results · Musifier{% endblock %}
 {% block body %}
 <h1>Results</h1>
-<p class="lead">Job {{ job }}. <a href="/">Compare another pair</a> · <a href="/settings">Advanced settings</a></p>
+<div class="actions top">
+  <a class="button" href="/">&larr; Compare another</a>
+  <a class="button small push-right" href="/settings">Advanced settings</a>
+</div>
 
 {% set c = comparison %}
 <div class="card">
-  <h2>Final score</h2>
+  <div class="card-head">
+    <h2>Final score</h2>
+    <a class="button small" href="/settings">Change</a>
+  </div>
   <div class="score">{{ "%.0f" | format(100 * score) }}%</div>
   <p class="lead">
     {% if fell_back %}No metric was selected, so this is the note score.{% else %}
@@ -14,13 +20,12 @@
     {% for p in parts if p.included and not p.counted and not fell_back %} {{ p.label }} could not be measured and was left out.{% endfor %}
     {% set skipped = parts | rejectattr("included") | map(attribute="label") | map("lower") | list %}
     {% if skipped %}Not counted: {{ skipped | join(", ") }}.{% endif %}
-    <a href="/settings">Change</a>
   </p>
 </div>
 
 <div class="card">
-  <h2>Notes <small class="tag">{{ "counts toward final score" if parts[0].counted else "not counted" }}</small></h2>
-  <div class="score">{{ "%.0f" | format(100 * c.score) }}%</div>
+  <h2>Notes{% if not parts[0].counted %} <small class="tag">not counted</small>{% endif %}</h2>
+  <div class="subscore">{{ "%.0f" | format(100 * c.score) }}%</div>
   <p class="lead">{{ c.counts.correct + (c.counts.octave if c.octave_counts_as_correct else 0) }} of {{ c.reference_notes }} reference notes played correctly.
     You reached note {{ c.reached_note }} of {{ c.reference_notes }}.</p>
   <div class="counts">
@@ -30,12 +35,12 @@
     <span class="missed">missed {{ c.counts.missed }}</span>
     <span class="extra">extra {{ c.counts.extra }}</span>
   </div>
-  <p class="lead">Notes quieter than {{ "%.2f" | format(c.min_loudness) }} ignored. Extra notes do not lower the score.</p>
 </div>
 
 {% set t = timing %}
 <div class="card">
-  <h2>Timing <small class="tag">tempo {{ "counts" if parts[2].counted else "not counted" }} · rhythm {{ "counts" if parts[1].counted else "not counted" }}</small></h2>
+  {% set off_names = (["tempo"] if not parts[2].counted else []) + (["rhythm"] if not parts[1].counted else []) %}
+  <h2>Timing{% if off_names %} <small class="tag">{{ off_names | join(" and ") }} not counted</small>{% endif %}</h2>
   {% if t.rhythm_score is none %}
   <p class="lead">Not enough matched notes to measure timing (need {{ 4 }}, had {{ t.matched }}).</p>
   {% else %}
@@ -43,13 +48,12 @@
     <div><span>tempo</span><b>{{ tempo_text }}</b></div>
     {% if parts[2].score is not none %}<div><span>tempo score</span><b>{{ "%.0f" | format(100 * parts[2].score) }}%</b></div>{% endif %}
     <div><span>rhythm</span><b>{{ "%.0f" | format(100 * t.rhythm_score) }}%</b></div>
+    <div><span>typical error</span><b>{{ "%.0f" | format(t.typical_error_ms) }} ms</b></div>
   </div>
-  <p class="lead">{{ t.within_tolerance }} of {{ t.matched }} matched notes were within {{ (1000 * t.tolerance) | int }} ms of where they should be.
-    Typical error {{ "%.0f" | format(t.typical_error_ms) }} ms. Playing slower or faster overall does not lower the rhythm score.</p>
   {% endif %}
   <details>
     <summary>Show note by note ({{ c.rows | length }} lines)</summary>
-    <table>
+    <div class="table-wrap"><table>
       <thead><tr><th>reference (s)</th><th>you (s)</th><th>result</th><th>timing</th></tr></thead>
       <tbody>
       {% for r in c.rows %}
@@ -73,7 +77,7 @@
         </tr>
       {% endfor %}
       </tbody>
-    </table>
+    </table></div>
   </details>
 </div>
 
@@ -90,15 +94,16 @@
   <a class="button" href="{{ r.midi_url }}">Download MIDI</a>
   <details>
     <summary>Show all notes</summary>
-    <table>
+    <div class="table-wrap"><table>
       <thead><tr><th>start (s)</th><th>length (s)</th><th>note</th><th>MIDI</th><th>loudness</th></tr></thead>
       <tbody>
       {% for n in r.result.notes %}
         <tr><td>{{ "%.2f" | format(n.start) }}</td><td>{{ "%.2f" | format(n.length) }}</td><td>{{ n.name }}</td><td>{{ n.pitch }}</td><td>{{ "%.2f" | format(n.loudness) }}</td></tr>
       {% endfor %}
       </tbody>
-    </table>
+    </table></div>
   </details>
 </div>
 {% endfor %}
+<p class="hint">Job {{ job }}</p>
 {% endblock %}
