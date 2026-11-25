@@ -1,0 +1,8 @@
+node_modules/
+.env
+.DS_Store
+*.pyc
+__pycache__/
+.venv/
+uploads/
+.flask_secret

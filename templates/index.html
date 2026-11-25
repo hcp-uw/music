@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Musifier</h1>
+<p class="lead">Record or upload yourself playing and an ideal version of the same song.</p>
+
+<form id="form" class="card" action="/transcribe" method="post" enctype="multipart/form-data" onsubmit="return starting()">
+  {% for field, label in recordings %}
+  <div class="slot" data-field="{{ field }}">
+    <label>{{ label }}</label>
+    <input class="file" name="{{ field }}" type="file" accept="audio/*,.m4a,.wav,.mp3,.aiff,.aif" hidden>
+    <div class="idle">
+      <button type="button" class="rec">Record</button>
+      <button type="button" class="pick">Choose file</button>
+      <small>WAV, M4A, MP3 or AIFF</small>
+    </div>
+    <div class="recording" hidden>
+      <span class="dot"></span><span>Recording… <span class="timer">0:00</span></span>
+      <button type="button" class="stop primary">Stop</button>
+    </div>
+    <div class="ready" hidden>
+      <span class="name"></span><span class="dur"></span>
+      <audio controls></audio>
+      <button type="button" class="remove">Remove</button>
+    </div>
+  </div>
+  {% endfor %}
+  <div class="actions">
+    <button id="go" type="submit" class="primary">Compare</button>
+    <a class="button small push-right" href="/settings">Advanced settings</a>
+  </div>
+  <div id="status" aria-live="polite"></div>
+</form>
+<p class="hint">Score counts {{ settings.metrics_text() }}. <a href="/settings">Change</a></p>
+
+<script>
+  function fmt(s) { s = Math.round(s); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+
+  // Turn whatever the browser recorded (webm, mp4, ogg…) into a mono 22050 Hz WAV file.
+  async function toWav(blob) {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const decoded = await ctx.decodeAudioData(await blob.arrayBuffer());
+    ctx.close();
+    const rate = 22050;
+    const off = new OfflineAudioContext(1, Math.ceil(decoded.duration * rate), rate);
+    const src = off.createBufferSource();
+    src.buffer = decoded; src.connect(off.destination); src.start();
+    const mono = (await off.startRendering()).getChannelData(0);
+    const buf = new ArrayBuffer(44 + mono.length * 2);
+    const v = new DataView(buf);
+    const str = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+    str(0, "RIFF"); v.setUint32(4, 36 + mono.length * 2, true); str(8, "WAVE");
+    str(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+    str(36, "data"); v.setUint32(40, mono.length * 2, true);
+    for (let i = 0; i < mono.length; i++) {
+      const s = Math.max(-1, Math.min(1, mono[i]));
+      v.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    }
+    return new Blob([buf], { type: "audio/wav" });
+  }
+
+  document.querySelectorAll(".slot").forEach(slot => {
+    const input = slot.querySelector(".file");
+    const views = { idle: slot.querySelector(".idle"), recording: slot.querySelector(".recording"), ready: slot.querySelector(".ready") };
+    const show = name => Object.entries(views).forEach(([k, el]) => el.hidden = k !== name);
+    const audio = slot.querySelector("audio");
+    let recorder, chunks, stream, timer, startedAt;
+
+    function showReady(file, name) {
+      slot.querySelector(".name").textContent = name;
+      slot.querySelector(".dur").textContent = "";
+      audio.src = URL.createObjectURL(file);
+      audio.onloadedmetadata = () => { if (isFinite(audio.duration)) slot.querySelector(".dur").textContent = fmt(audio.duration); };
+      show("ready");
+    }
+
+    slot.querySelector(".pick").onclick = () => input.click();
+    input.onchange = () => { if (input.files[0]) showReady(input.files[0], input.files[0].name); };
+
+    slot.querySelector(".rec").onclick = async () => {
+      if (!navigator.mediaDevices || !window.MediaRecorder) { setStatus("This browser cannot record. Please choose a file instead."); return; }
+      try {
+        // Voice processing (echo cancellation, noise suppression, auto gain) ruins piano sound, so it is off.
+        stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+      } catch (e) {
+        setStatus("Microphone access was refused. You can still choose a file."); return;
+      }
+      chunks = [];
+      recorder = new MediaRecorder(stream);
+      recorder.ondataavailable = e => chunks.push(e.data);
+      recorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        clearInterval(timer);
+        setStatus("Preparing your recording…");
+        try {
+          const wav = await toWav(new Blob(chunks, { type: recorder.mimeType }));
+          const file = new File([wav], slot.dataset.field + "-recording.wav", { type: "audio/wav" });
+          const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files;
+          showReady(file, "Recorded just now");
+          setStatus("");
+        } catch (e) {
+          setStatus("Sorry, the recording could not be processed. Please try again or choose a file."); show("idle");
+        }
+      };
+      recorder.start();
+      startedAt = Date.now();
+      timer = setInterval(() => slot.querySelector(".timer").textContent = fmt((Date.now() - startedAt) / 1000), 250);
+      show("recording");
+    };
+    slot.querySelector(".stop").onclick = () => { if (recorder && recorder.state !== "inactive") recorder.stop(); };
+    slot.querySelector(".remove").onclick = () => { input.value = ""; audio.removeAttribute("src"); show("idle"); };
+  });
+
+  function setStatus(text) { document.getElementById("status").textContent = text; }
+
+  function starting() {
+    const missing = [...document.querySelectorAll(".slot")].filter(s => s.querySelector(".file").files.length === 0);
+    if (missing.length) {
+      setStatus("Please add " + (missing.length === 2 ? "both recordings" : "the " + missing[0].querySelector("label").textContent.toLowerCase()) + " first.");
+      return false;
+    }
+    document.getElementById("go").disabled = true;
+    setStatus("Listening to both recordings and comparing them… this takes a few seconds per minute of audio.");
+    return true;
+  }
+</script>
+{% endblock %}
